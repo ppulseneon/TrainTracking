@@ -20,7 +20,7 @@ public class Park
     /// <summary>
     /// Номер во внешней системе
     /// </summary>
-    public int AsuNumber { get; set; }
+    public string AsuNumber { get; set; } = string.Empty;
 
     /// <summary>
     /// Тип парка

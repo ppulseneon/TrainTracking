@@ -24,6 +24,13 @@ TrainTracking/
 └── docker-compose.yml       # Оркестрация контейнеров
 ```
 
+### Используемые паттерны
+- **Service Layer Pattern** для сервисов
+- **Mapper Pattern** для преобразования данных
+- **Extension Methods** для фильтрации запросов
+- **Fluent Configuration** для Entity Framework
+- **Dependency Injection** с extension методами
+
 ## Запуск
 
 1. Клонирование репозитория
@@ -46,3 +53,4 @@ docker-compose ps
 3. Фронтенд будет доступен по адресу http://localhost:5000 (бэк на http://localhost:7134)
 
 > При запуске база данных автоматически подтягивает бэкап базы из файла, прикрпеленного вместе с ТЗ
+

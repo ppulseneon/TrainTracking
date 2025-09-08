@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using TrainStationService.DAL.Enums;
 
 namespace TrainStationService.DAL.Models;
@@ -33,4 +31,8 @@ public class EpcEvent
     /// Идентификатор ЕПС
     /// </summary>
     public int IdEpc { get; set; }
+    
+    public virtual Path Path { get; set; } = null!;
+    
+    public virtual Epc Epc { get; set; } = null!;
 }

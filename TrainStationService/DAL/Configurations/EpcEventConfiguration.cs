@@ -21,8 +21,12 @@ public class EpcEventConfiguration : IEntityTypeConfiguration<EpcEvent>
             
         builder.Property(e => e.IdEpc).IsRequired();
         
-        builder.HasOne<Models.Path>()
+        builder.HasOne(e => e.Path)
             .WithMany(p => p.EpcEvents)
             .HasForeignKey(e => e.IdPath);
+
+        builder.HasOne(e => e.Epc)
+            .WithMany()
+            .HasForeignKey(e => e.IdEpc);
     }
 }

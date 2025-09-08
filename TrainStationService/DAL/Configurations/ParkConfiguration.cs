@@ -15,7 +15,9 @@ public class ParkConfiguration : IEntityTypeConfiguration<Park>
 
         builder.Property(e => e.Name).IsRequired();
             
-        builder.Property(e => e.AsuNumber).IsRequired();
+        builder.Property(e => e.AsuNumber)
+            .HasMaxLength(4)
+            .IsRequired();
             
         builder.Property(e => e.Type).IsRequired();
             
