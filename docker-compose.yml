@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  
+  postgres:
+    image: postgres:latest
+    container_name: train_tracking_postgres
+    environment:
+      POSTGRES_DB: train_station
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scheduler.backup:/tmp/scheduler.backup:ro
+      - ./restore-backup.sh:/docker-entrypoint-initdb.d/restore-backup.sh:ro
+    restart: unless-stopped
+
+  train-station-service:
+    build:
+      context: .
+      dockerfile: TrainStationService/Dockerfile
+    container_name: train_station_service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=train_station;Username=postgres;Password=password;Port=5432
+    ports:
+      - "7134:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  train-station-client:
+    build:
+      context: .
+      dockerfile: TrainStationClient/Dockerfile
+    container_name: train_station_client
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - GrpcSettings__TrainStationServiceUrl=http://train-station-service:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - train-station-service
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

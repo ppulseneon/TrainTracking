@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option csharp_namespace = "TrainCarGrpcService";
+
+package traincar;
+
+import "google/protobuf/timestamp.proto";
+
+service TrainCarService {
+  rpc GetTrainCars (GetTrainCarsRequest) returns (GetTrainCarsResponse);
+}
+
+message GetTrainCarsRequest {
+  google.protobuf.Timestamp start_date = 1;
+  google.protobuf.Timestamp end_date = 2;
+}
+
+message GetTrainCarsResponse {
+  repeated TrainCar train_cars = 1;
+}
+
+message TrainCar {
+  string car_number = 1; 
+  google.protobuf.Timestamp arrival_time = 2; 
+  google.protobuf.Timestamp departure_time = 3; 
+}
