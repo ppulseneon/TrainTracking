@@ -29,7 +29,7 @@ TrainTracking/
 1. Клонирование репозитория
 
 ```
-git clone <repository-url>
+git clone https://github.com/ppulseneon/TrainTracking.git
 cd TrainTracking
 ```
 
