@@ -91,6 +91,7 @@ public class TrainCarService(
                     EndTime = g.Max(e => e.Time),
                     ParkName = g.Key.ParkName
                 })
+                .Where(p => p.StartTime != p.EndTime)
                 .OrderBy(p => p.StartTime)
                 .ToList();
 
