@@ -1,12 +1,12 @@
+using FluentValidation;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
-using TrainStationService.Exceptions;
 
 namespace TrainStationService.Interceptors;
 
-public class ValidationInterceptor(ILogger<ValidationInterceptor> logger) : Interceptor
+public class ValidationInterceptor(ILogger<ValidationInterceptor> logger, IServiceProvider serviceProvider) : Interceptor
 {
-    private const string InternalErrorMessage = "Внутренняя ошибка";
+    private const string InternalErrorMessage = "Internal error";
     
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
@@ -15,9 +15,11 @@ public class ValidationInterceptor(ILogger<ValidationInterceptor> logger) : Inte
     {
         try
         {
+            await ValidateRequestAsync(request, context.CancellationToken);
+            
             return await continuation(request, context);
         }
-        catch (ValidationException validationEx)
+        catch (TrainStationService.Exceptions.ValidationException validationEx)
         {
             logger.LogWarning("Ошибка валидации {Method}: {Errors}",
                 context.Method,
@@ -25,16 +27,8 @@ public class ValidationInterceptor(ILogger<ValidationInterceptor> logger) : Inte
 
             var errorMessage = string.Join("; ", validationEx.Errors.SelectMany(e => e.Value));
             
-            var metadata = new Metadata();
-            foreach (var error in validationEx.Errors)
-            {
-                metadata.Add($"validation-{error.Key.ToLowerInvariant()}", 
-                    string.Join(", ", error.Value));
-            }
-
             throw new RpcException(
-                new Status(StatusCode.InvalidArgument, $"Ошибка валидации: {errorMessage}"),
-                metadata);
+                new Status(StatusCode.InvalidArgument, $"Validation error: {errorMessage}"));
         }
         catch (ArgumentException argEx)
         {
@@ -77,19 +71,35 @@ public class ValidationInterceptor(ILogger<ValidationInterceptor> logger) : Inte
         {
             await continuation(request, responseStream, context);
         }
-        catch (ValidationException validationEx)
+        catch (TrainStationService.Exceptions.ValidationException validationEx)
         {
             logger.LogWarning("Ошибка валидации в потоковом запросе {Method}: {Errors}",
                 context.Method,
                 string.Join("; ", validationEx.Errors.SelectMany(e => e.Value)));
 
             var errorMessage = string.Join("; ", validationEx.Errors.SelectMany(e => e.Value));
-            throw new RpcException(new Status(StatusCode.InvalidArgument, $"Ошибка валидации: {errorMessage}"));
+            throw new RpcException(new Status(StatusCode.InvalidArgument, $"Validation error: {errorMessage}"));
         }
         catch (Exception ex) when (ex is not RpcException)
         {
             logger.LogError(ex, "Необработанное исключение в потоковом методе {Method}", context.Method);
             throw new RpcException(new Status(StatusCode.Internal, InternalErrorMessage));
+        }
+    }
+    
+    private async Task ValidateRequestAsync<TRequest>(TRequest request, CancellationToken cancellationToken)
+    {
+        var validator = serviceProvider.GetService<IValidator<TRequest>>();
+        if (validator == null) return;
+
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+            
+            throw new TrainStationService.Exceptions.ValidationException(errors);
         }
     }
 }

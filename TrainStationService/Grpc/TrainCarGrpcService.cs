@@ -1,8 +1,6 @@
-using FluentValidation;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using TrainCarGrpcService;
-using TrainStationService.Exceptions;
 using TrainStationService.Services.Interfaces;
 
 namespace TrainStationService.Grpc;
@@ -12,8 +10,6 @@ namespace TrainStationService.Grpc;
 /// </summary>
 public class TrainCarGrpcService(
     ITrainCarService trainCarService,
-    IValidator<GetTrainCarsRequest> trainCarsRequestValidator,
-    IValidator<GetTrainCarPathsRequest> trainCarPathsRequestValidator,
     ILogger<TrainCarGrpcService> logger)
     : TrainCarService.TrainCarServiceBase
 {
@@ -21,17 +17,6 @@ public class TrainCarGrpcService(
     {
         try
         {
-            // Валидация запроса
-            var validationResult = await trainCarsRequestValidator.ValidateAsync(request, context.CancellationToken);
-            if (!validationResult.IsValid)
-            {
-                var errors = validationResult.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-                
-                throw new TrainStationService.Exceptions.ValidationException(errors);
-            }
-
             var startDate = request.StartDate.ToDateTime();
             var endDate = request.EndDate.ToDateTime();
 
@@ -72,17 +57,6 @@ public class TrainCarGrpcService(
     {
         try
         {
-            // Валидация запроса
-            var validationResult = await trainCarPathsRequestValidator.ValidateAsync(request, context.CancellationToken);
-            if (!validationResult.IsValid)
-            {
-                var errors = validationResult.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-                
-                throw new TrainStationService.Exceptions.ValidationException(errors);
-            }
-
             var startDate = request.StartDate.ToDateTime();
             var endDate = request.EndDate.ToDateTime();
 

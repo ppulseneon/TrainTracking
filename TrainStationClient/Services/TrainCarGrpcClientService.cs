@@ -1,4 +1,5 @@
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using TrainCarGrpcService;
 
 namespace TrainStationClient.Services;

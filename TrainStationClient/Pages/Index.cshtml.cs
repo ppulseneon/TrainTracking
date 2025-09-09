@@ -5,17 +5,9 @@ using TrainStationClient.Services;
 
 namespace TrainStationClient.Pages;
 
-public class IndexModel : PageModel
+public class IndexModel(ILogger<IndexModel> logger, ITrainCarGrpcClientService trainCarService)
+    : PageModel
 {
-    private readonly ILogger<IndexModel> _logger;
-    private readonly ITrainCarGrpcClientService _trainCarService;
-
-    public IndexModel(ILogger<IndexModel> logger, ITrainCarGrpcClientService trainCarService)
-    {
-        _logger = logger;
-        _trainCarService = trainCarService;
-    }
-
     [BindProperty]
     public DateTime StartDate { get; set; } = DateTime.Today.AddDays(-7);
 
@@ -24,7 +16,7 @@ public class IndexModel : PageModel
 
     public List<TrainCar> TrainCars { get; set; } = [];
 
-    public string? ErrorMessage { get; set; }
+    public List<string> Errors { get; set; } = [];
 
     public bool ShowResults { get; set; }
 
@@ -46,22 +38,22 @@ public class IndexModel : PageModel
         {
             if (StartDate > EndDate)
             {
-                ErrorMessage = "Дата начала не может быть больше даты окончания";
+                Errors = ["Дата начала не может быть больше даты окончания"];
                 return Page();
             }
 
-            _logger.LogInformation("Запрос данных о вагонах с {StartDate} по {EndDate}", StartDate, EndDate);
+            logger.LogInformation("Запрос данных о вагонах с {StartDate} по {EndDate}", StartDate, EndDate);
 
-            var response = await _trainCarService.GetTrainCarsAsync(StartDate, EndDate);
+            var response = await trainCarService.GetTrainCarsAsync(StartDate, EndDate);
             TrainCars = response.TrainCars.ToList();
             ShowResults = true;
 
-            _logger.LogInformation("Получено {Count} вагонов", TrainCars.Count);
+            logger.LogInformation("Получено {Count} вагонов", TrainCars.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при получении данных о вагонах");
-            ErrorMessage = $"Ошибка при получении данных: {ex.Message}";
+            logger.LogError(ex, "Ошибка при получении данных о вагонах");
+            Errors = ParseValidationErrors(ex.Message);
         }
 
         return Page();
@@ -73,32 +65,53 @@ public class IndexModel : PageModel
         {
             if (string.IsNullOrEmpty(SelectedCarNumber))
             {
-                ErrorMessage = "Необходимо указать номер вагона";
+                Errors = ["Обязательно нужно указать номер вагона"];
                 return Page();
             }
 
-            _logger.LogInformation("Запрос путей для вагона {CarNumber} с {StartDate} по {EndDate}", SelectedCarNumber, StartDate, EndDate);
+            logger.LogInformation("Запрос путей для вагона {CarNumber} с {StartDate} по {EndDate}", SelectedCarNumber, StartDate, EndDate);
 
-            var response = await _trainCarService.GetTrainCarPathsAsync(SelectedCarNumber, StartDate, EndDate);
+            var response = await trainCarService.GetTrainCarPathsAsync(SelectedCarNumber, StartDate, EndDate);
             CarPathInfo = response.PathInfo;
             ShowPathDetails = true;
 
             if (CarPathInfo != null)
             {
-                _logger.LogInformation("Получена информация о {PathCount} путях для вагона {CarNumber}", 
+                logger.LogInformation("Получена информация о {PathCount} путях для вагона {CarNumber}", 
                     CarPathInfo.PathStays.Count, SelectedCarNumber);
             }
             else
             {
-                ErrorMessage = $"Информация о путях для вагона {SelectedCarNumber} не найдена";
+                Errors = [$"Информация о путях для вагона {SelectedCarNumber} не была найдена"];
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при получении информации о путях для вагона {CarNumber}", SelectedCarNumber);
-            ErrorMessage = $"Ошибка при получении информации о путях: {ex.Message}";
+            logger.LogError(ex, "Ошибка при получении информации о путях для вагона №{CarNumber}", SelectedCarNumber);
+            Errors = ParseValidationErrors(ex.Message);
         }
 
         return Page();
+    }
+    
+    private static List<string> ParseValidationErrors(string errorMessage)
+    {
+        var errors = new List<string>();
+        
+        if (errorMessage.Contains("Validation error:"))
+        {
+            var validationPart = errorMessage[(errorMessage.IndexOf("Validation error:", StringComparison.Ordinal) + "Validation error:".Length)..].Trim();
+            
+            errors = validationPart.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .Select(e => e.Trim())
+                .Where(e => !string.IsNullOrEmpty(e))
+                .ToList();
+        }
+        else
+        {
+            errors.Add(errorMessage);
+        }
+
+        return errors;
     }
 }
