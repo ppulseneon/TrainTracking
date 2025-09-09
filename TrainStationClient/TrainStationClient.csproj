@@ -27,5 +27,5 @@
     <ItemGroup>
         <Protobuf Include="Protos\train_car_service.proto" GrpcServices="Client" />
     </ItemGroup>
-
+    
 </Project>

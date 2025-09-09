@@ -12,7 +12,13 @@ html {
 
 body {
   margin-bottom: 60px;
+  background-color: #f8f9fa;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  position: relative;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
@@ -33,6 +39,8 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: none;
   margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
 }
 
 .card-header {
@@ -75,4 +83,11 @@ body {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Alert styling for better visibility on background */
+.alert {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
