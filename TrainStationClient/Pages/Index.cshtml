@@ -31,8 +31,39 @@
                         </div>
                         
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                            <button type="submit" class="btn btn-primary btn-lg me-3">
                                 <i class="fas fa-search"></i> Получить выгрузку данных
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <form method="post" asp-page-handler="GetPaths">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label asp-for="StartDate" class="form-label">Дата начала:</label>
+                                    <input asp-for="StartDate" type="date" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EndDate" class="form-label">Дата окончания:</label>
+                                    <input asp-for="EndDate" type="date" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label asp-for="SelectedCarNumber" class="form-label">Номер вагона:</label>
+                                    <input asp-for="SelectedCarNumber" type="text" class="form-control" placeholder="Введите номер вагона" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-info btn-lg">
+                                <i class="fas fa-route"></i> Получить пути вагона
                             </button>
                         </div>
                     </form>
@@ -127,6 +158,100 @@
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle"></i>
                                     За указанный период данные о вагонах не найдены
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.ShowPathDetails && Model.CarPathInfo != null)
+    {
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Информация о путях для вагона @Model.CarPathInfo.CarNumber
+                            <span class="badge bg-info">@Model.CarPathInfo.PathStays.Count путей</span>
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Время прибытия на станцию:</strong>
+                                @if (Model.CarPathInfo.ArrivalTime != null)
+                                {
+                                    @Model.CarPathInfo.ArrivalTime.ToDateTime().ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Не определено</span>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Время отправления со станции:</strong>
+                                @if (Model.CarPathInfo.DepartureTime != null)
+                                {
+                                    @Model.CarPathInfo.DepartureTime.ToDateTime().ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Не определено</span>
+                                }
+                            </div>
+                        </div>
+
+                        @if (Model.CarPathInfo.PathStays.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>№ Пути</th>
+                                            <th>Парк</th>
+                                            <th>Время начала</th>
+                                            <th>Время окончания</th>
+                                            <th>Продолжительность</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var pathStay in Model.CarPathInfo.PathStays)
+                                        {
+                                            <tr>
+                                                <td><strong>@pathStay.PathNumber</strong></td>
+                                                <td>@pathStay.ParkName</td>
+                                                <td>@pathStay.StartTime.ToDateTime().ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                                <td>@pathStay.EndTime.ToDateTime().ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                                <td>
+                                                    @{
+                                                        var duration = pathStay.EndTime.ToDateTime() - pathStay.StartTime.ToDateTime();
+                                                        var hours = (int)duration.TotalHours;
+                                                        var minutes = duration.Minutes;
+                                                    }
+                                                    @if (hours > 0)
+                                                    {
+                                                        @($"{hours} ч {minutes} мин")
+                                                    }
+                                                    else
+                                                    {
+                                                        @($"{minutes} мин")
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    Информация о путях для данного вагона не найдена
                                 </div>
                             </div>
                         }

@@ -35,4 +35,34 @@ public class TrainCarGrpcClientService(
             throw;
         }
     }
+
+    /// <summary>
+    /// Получить информацию о путях конкретного вагона за указанный период
+    /// </summary>
+    public async Task<GetTrainCarPathsResponse> GetTrainCarPathsAsync(string carNumber, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Отправка gRPC запроса для получения путей вагона {CarNumber} с {StartDate} по {EndDate}", carNumber, startDate, endDate);
+
+            var request = new GetTrainCarPathsRequest
+            {
+                CarNumber = carNumber,
+                StartDate = Timestamp.FromDateTime(startDate.ToUniversalTime()),
+                EndDate = Timestamp.FromDateTime(endDate.ToUniversalTime())
+            };
+
+            var response = await grpcClient.GetTrainCarPathsAsync(request, cancellationToken: cancellationToken);
+            
+            logger.LogInformation("Получен ответ с информацией {PathCount}  о путях для вагона {CarNumber}", 
+                response.PathInfo?.PathStays.Count ?? 0, carNumber);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Ошибка при выполнении gRPC запроса GetTrainCarPaths для вагона {CarNumber}", carNumber);
+            throw;
+        }
+    }
 }

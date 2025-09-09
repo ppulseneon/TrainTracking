@@ -31,7 +31,6 @@
       <Folder Include="DAL\Configurations\" />
       <Folder Include="DAL\Models\" />
       <Folder Include="DI\" />
-      <Folder Include="Dto\" />
     </ItemGroup>
 
 </Project>

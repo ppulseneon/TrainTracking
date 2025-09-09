@@ -22,11 +22,18 @@ public class IndexModel : PageModel
     [BindProperty]
     public DateTime EndDate { get; set; } = DateTime.Today;
 
-    public List<TrainCar> TrainCars { get; set; } = new();
+    public List<TrainCar> TrainCars { get; set; } = [];
 
     public string? ErrorMessage { get; set; }
 
     public bool ShowResults { get; set; }
+
+    [BindProperty]
+    public string? SelectedCarNumber { get; set; }
+
+    public TrainCarPathInfo? CarPathInfo { get; set; }
+
+    public bool ShowPathDetails { get; set; }
 
     public void OnGet()
     {
@@ -55,6 +62,41 @@ public class IndexModel : PageModel
         {
             _logger.LogError(ex, "Ошибка при получении данных о вагонах");
             ErrorMessage = $"Ошибка при получении данных: {ex.Message}";
+        }
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostGetPathsAsync()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(SelectedCarNumber))
+            {
+                ErrorMessage = "Необходимо указать номер вагона";
+                return Page();
+            }
+
+            _logger.LogInformation("Запрос путей для вагона {CarNumber} с {StartDate} по {EndDate}", SelectedCarNumber, StartDate, EndDate);
+
+            var response = await _trainCarService.GetTrainCarPathsAsync(SelectedCarNumber, StartDate, EndDate);
+            CarPathInfo = response.PathInfo;
+            ShowPathDetails = true;
+
+            if (CarPathInfo != null)
+            {
+                _logger.LogInformation("Получена информация о {PathCount} путях для вагона {CarNumber}", 
+                    CarPathInfo.PathStays.Count, SelectedCarNumber);
+            }
+            else
+            {
+                ErrorMessage = $"Информация о путях для вагона {SelectedCarNumber} не найдена";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении информации о путях для вагона {CarNumber}", SelectedCarNumber);
+            ErrorMessage = $"Ошибка при получении информации о путях: {ex.Message}";
         }
 
         return Page();

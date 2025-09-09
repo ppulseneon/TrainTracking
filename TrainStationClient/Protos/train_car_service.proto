@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 service TrainCarService {
   rpc GetTrainCars (GetTrainCarsRequest) returns (GetTrainCarsResponse);
+  rpc GetTrainCarPaths (GetTrainCarPathsRequest) returns (GetTrainCarPathsResponse);
 }
 
 message GetTrainCarsRequest {
@@ -23,4 +24,28 @@ message TrainCar {
   string car_number = 1; 
   google.protobuf.Timestamp arrival_time = 2; 
   google.protobuf.Timestamp departure_time = 3; 
+}
+
+message GetTrainCarPathsRequest {
+  string car_number = 1;
+  google.protobuf.Timestamp start_date = 2;
+  google.protobuf.Timestamp end_date = 3;
+}
+
+message GetTrainCarPathsResponse {
+  TrainCarPathInfo path_info = 1;
+}
+
+message TrainCarPathInfo {
+  string car_number = 1;
+  google.protobuf.Timestamp arrival_time = 2;
+  google.protobuf.Timestamp departure_time = 3;
+  repeated PathStayInfo path_stays = 4;
+}
+
+message PathStayInfo {
+  string path_number = 1;
+  google.protobuf.Timestamp start_time = 2;
+  google.protobuf.Timestamp end_time = 3;
+  string park_name = 4;
 }
